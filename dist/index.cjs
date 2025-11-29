@@ -1,0 +1,216 @@
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.tsx
+var index_exports = {};
+__export(index_exports, {
+  GameRenderer: () => GameRenderer,
+  MapRenderer: () => MapRenderer,
+  renderGame: () => renderGame,
+  renderMap: () => renderMap
+});
+module.exports = __toCommonJS(index_exports);
+var import_ink3 = require("ink");
+
+// src/components/MapRenderer.tsx
+var import_react = require("react");
+var import_ink = require("ink");
+var import_jsx_runtime = require("react/jsx-runtime");
+var TERRAIN_SYMBOLS = {
+  grass: ".",
+  water: "~",
+  mountain: "^",
+  forest: "t",
+  desert: "#",
+  road: "=",
+  plains: ".",
+  swamp: ":",
+  snow: "*",
+  sand: "-"
+};
+var TERRAIN_COLORS = {
+  grass: "gray",
+  water: "blue",
+  mountain: "white",
+  forest: "green",
+  desert: "yellow",
+  road: "gray",
+  plains: "cyan",
+  swamp: "magenta",
+  snow: "white",
+  sand: "yellow"
+};
+var UNIT_COLOR = "green";
+var MapRenderer = ({
+  map,
+  unitNames = {},
+  showCoordinates = true,
+  cellWidth = 1,
+  showUnits = true,
+  showTerrain = true,
+  compactView = true,
+  useColors = true
+}) => {
+  const [mapState, setMapState] = (0, import_react.useState)([]);
+  (0, import_react.useEffect)(() => {
+    const updatedMap = [];
+    for (let y = 0; y < map.height; y++) {
+      const row = [];
+      if (showCoordinates) {
+        const coordStr = y.toString().padStart(2, " ");
+        row.push({ content: compactView ? `${coordStr}|` : `${coordStr} |`, isUnit: false, terrain: "grass" });
+      }
+      for (let x = 0; x < map.width; x++) {
+        let cellContent = "";
+        let isUnit = false;
+        let terrainType = "grass";
+        if (showUnits) {
+          const unitId = map.getUnitAt(x, y);
+          if (unitId) {
+            const unitName = unitNames[unitId] || unitId;
+            cellContent = unitName.charAt(0).toUpperCase();
+            isUnit = true;
+          }
+        }
+        if (!cellContent && showTerrain) {
+          const cell = map.getCell(x, y);
+          terrainType = cell?.terrain || "grass";
+          cellContent = TERRAIN_SYMBOLS[terrainType] || "?";
+        }
+        if (cellWidth > 1) {
+          cellContent = cellContent.padEnd(cellWidth, " ");
+        } else if (!compactView) {
+          cellContent += " ";
+        }
+        row.push({ content: cellContent, isUnit, terrain: terrainType });
+      }
+      updatedMap.push(row);
+    }
+    setMapState(updatedMap);
+  }, [map, unitNames, showCoordinates, cellWidth, showUnits, showTerrain, compactView]);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_ink.Box, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Text, { bold: true, children: `Map: ${map.name} (${map.width}x${map.height})` }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Newline, {}),
+    mapState.map((row, rowIndex) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Box, { flexDirection: "row", children: row.map((cellData, cellIndex) => {
+      const color = useColors ? cellData.isUnit ? UNIT_COLOR : TERRAIN_COLORS[cellData.terrain] : void 0;
+      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Text, { color, children: cellData.content }, cellIndex);
+    }) }, rowIndex))
+  ] });
+};
+
+// src/components/GameRenderer.tsx
+var import_ink2 = require("ink");
+var import_jsx_runtime2 = require("react/jsx-runtime");
+var GameRenderer = ({
+  world,
+  unitNames = {},
+  unitPositions = {},
+  selectedMap
+}) => {
+  const maps = world.getAllMaps();
+  const mapsToRender = selectedMap ? maps.filter((map) => map.name === selectedMap) : maps;
+  const createUnitMap = (map) => {
+    const mapUnits = {};
+    Object.entries(unitNames).forEach(([unitId, name]) => {
+      const pos = unitPositions[unitId];
+      if (pos && pos.mapId === map.name) {
+        mapUnits[unitId] = name;
+      }
+    });
+    return mapUnits;
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", padding: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { bold: true, color: "cyan", children: "Takao Engine - Game View" }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { color: "gray", children: (/* @__PURE__ */ new Date()).toLocaleTimeString() })
+    ] }),
+    mapsToRender.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { color: "yellow", children: "No maps available" }) : mapsToRender.map((map, index) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", marginBottom: 2, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        MapRenderer,
+        {
+          map,
+          unitNames: createUnitMap(map),
+          showCoordinates: true,
+          cellWidth: 1,
+          showUnits: true,
+          showTerrain: true,
+          compactView: true,
+          useColors: true
+        }
+      ),
+      index < mapsToRender.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Newline, {})
+    ] }, map.name)),
+    Object.keys(unitPositions).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", marginTop: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { bold: true, children: "Unit Positions:" }),
+      Object.entries(unitPositions).map(([unitId, posInfo]) => {
+        const unitName = unitNames[unitId] || unitId;
+        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Text, { children: [
+          unitName,
+          " (",
+          unitId.substring(0, 8),
+          "...) at ",
+          posInfo.mapId,
+          " (",
+          posInfo.position.x,
+          ", ",
+          posInfo.position.y,
+          ")"
+        ] }, unitId);
+      })
+    ] })
+  ] });
+};
+
+// src/index.tsx
+var import_jsx_runtime3 = require("react/jsx-runtime");
+var renderMap = (map, unitNames, options) => {
+  const { waitUntilExit } = (0, import_ink3.render)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      MapRenderer,
+      {
+        map,
+        unitNames,
+        ...options
+      }
+    )
+  );
+  return waitUntilExit;
+};
+var renderGame = (world, unitNames, unitPositions, selectedMap) => {
+  const { waitUntilExit } = (0, import_ink3.render)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      GameRenderer,
+      {
+        world,
+        unitNames,
+        unitPositions,
+        selectedMap
+      }
+    )
+  );
+  return waitUntilExit;
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  GameRenderer,
+  MapRenderer,
+  renderGame,
+  renderMap
+});
+//# sourceMappingURL=index.cjs.map

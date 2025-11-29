@@ -1,0 +1,55 @@
+{
+  "name": "@atsu/maya",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A modern rendering system for TakaoEngine using Ink",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "tsx examples/demo.tsx",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write src",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "game-engine",
+    "terminal",
+    "rendering",
+    "ink",
+    "react",
+    "typescript"
+  ],
+  "author": "Tsukugi",
+  "license": "MIT",
+  "dependencies": {
+    "@atsu/choukai": "file:../Choukai",
+    "@atsu/takao": "file:../Takao",
+    "ink": "^4.0.0",
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.19.1",
+    "@types/react": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.0.0",
+    "tslib": "^2.8.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0",
+    "vitest": "^1.6.1"
+  }
+}
