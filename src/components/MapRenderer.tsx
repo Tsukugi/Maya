@@ -1,13 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Box, Text, Newline } from 'ink';
 import type { Map as GameMap, Position } from '@atsu/choukai';
-import type { BaseUnit } from '@atsu/atago';
-
-interface IUnitPosition {
-  unitId: string;
-  mapId: string;
-  position: Position;
-}
+import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 
 interface MapRendererProps {
   map: GameMap;
@@ -48,7 +42,8 @@ const TERRAIN_COLORS: Record<string, string> = {
 
 const UNIT_COLOR = 'green';
 
-export const MapRenderer: React.FC<MapRendererProps> = ({
+// Single text component for entire map rendering to reduce component overhead
+export const MapRenderer: React.FC<MapRendererProps> = memo(({
   map,
   units = {},
   showCoordinates = true,
@@ -58,14 +53,25 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
   compactView = true,
   useColors = true,
 }) => {
-  const [mapState, setMapState] = useState<{content: string, isUnit: boolean, terrain: string}[][]>([]);
+  // Generate the entire map as a single string to reduce component overhead
+  const mapDisplay = useMemo(() => {
+    // Create a map of unit positions for efficient lookup
+    const unitPositions = new Map<string, BaseUnit>();
+    if (showUnits) {
+      for (const unit of Object.values(units)) {
+        const positionData = unit.getPropertyValue<IUnitPosition>('position');
+        if (positionData && positionData.mapId === map.name) {
+          const posKey = `${positionData.position.x},${positionData.position.y}`;
+          unitPositions.set(posKey, unit);
+        }
+      }
+    }
 
-  useEffect(() => {
-    const updatedMap: {content: string, isUnit: boolean, terrain: string}[][] = [];
+    const rows: Array<Array<{content: string, isUnit: boolean, terrain: string}>> = [];
 
     // Generate the map display
     for (let y = 0; y < map.height; y++) {
-      const row: {content: string, isUnit: boolean, terrain: string}[] = [];
+      const row: Array<{content: string, isUnit: boolean, terrain: string}> = [];
 
       if (showCoordinates) {
         const coordStr = y.toString().padStart(2, ' ');
@@ -77,16 +83,10 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         let isUnit = false;
         let terrainType = 'grass';
 
+        // Efficiently check for a unit at this position
         if (showUnits) {
-          // Find a unit at this position by checking their stored positions
-          const unitAtPosition = Object.values(units).find(unit => {
-            const positionData = unit.getPropertyValue('position');
-            return (
-              positionData?.mapId === map.name &&
-              positionData.position.x === x &&
-              positionData.position.y === y
-            );
-          });
+          const posKey = `${x},${y}`;
+          const unitAtPosition = unitPositions.get(posKey);
 
           if (unitAtPosition) {
             const unitName = unitAtPosition.name || unitAtPosition.id;
@@ -111,31 +111,55 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         row.push({ content: cellContent, isUnit, terrain: terrainType });
       }
 
-      updatedMap.push(row);
+      rows.push(row);
     }
 
-    setMapState(updatedMap);
-  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView, useColors]);
+    return rows;
+  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView]); // Removed useColors to avoid unnecessary updates
 
   return (
     <Box flexDirection="column">
       <Text bold>{`Map: ${map.name} (${map.width}x${map.height})`}</Text>
       <Newline />
-      {mapState.map((row, rowIndex) => (
-        <Box key={rowIndex} flexDirection="row">
-          {row.map((cellData, cellIndex) => {
-            const color = useColors
-              ? (cellData.isUnit ? UNIT_COLOR : TERRAIN_COLORS[cellData.terrain])
-              : undefined;
+      {mapDisplay.map((row, rowIndex) => {
+        // Group consecutive cells with the same color to reduce the number of Text components
+        const segments = [];
+        let currentSegment = '';
+        let currentColor: string | undefined = undefined;
+        let firstCell = true;
 
-            return (
-              <Text key={cellIndex} color={color}>
-                {cellData.content}
+        for (const cellData of row) {
+          const color = useColors
+            ? (cellData.isUnit ? UNIT_COLOR : TERRAIN_COLORS[cellData.terrain])
+            : undefined;
+
+          if (firstCell || color !== currentColor) {
+            if (!firstCell) {
+              segments.push({ content: currentSegment, color: currentColor || undefined });
+            }
+            currentSegment = cellData.content;
+            currentColor = color;
+            firstCell = false;
+          } else {
+            currentSegment += cellData.content;
+          }
+        }
+
+        // Add the last segment
+        if (currentSegment) {
+          segments.push({ content: currentSegment, color: currentColor });
+        }
+
+        return (
+          <Box key={rowIndex} flexDirection="row">
+            {segments.map((segment, segIndex) => (
+              <Text key={segIndex} color={segment.color}>
+                {segment.content}
               </Text>
-            );
-          })}
-        </Box>
-      ))}
+            ))}
+          </Box>
+        );
+      })}
     </Box>
   );
-};
+});

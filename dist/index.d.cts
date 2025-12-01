@@ -18,6 +18,7 @@ interface IGameRendererConfig {
     showUnitPositions?: boolean;
     selectedMap?: string | undefined;
 }
+
 interface GameRendererProps {
     world: World;
     units?: Record<string, BaseUnit>;
@@ -35,4 +36,4 @@ declare const renderMap: (map: Map, units?: Record<string, BaseUnit>, options?: 
 }) => () => Promise<void>;
 declare const renderGame: (world: World, units?: Record<string, BaseUnit>, config?: IGameRendererConfig) => () => Promise<void>;
 
-export { GameRenderer, MapRenderer, renderGame, renderMap };
+export { GameRenderer, type IGameRendererConfig, MapRenderer, renderGame, renderMap };

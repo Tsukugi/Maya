@@ -9,12 +9,7 @@ import { Box, Text, Newline } from 'ink';
 import { render } from 'ink';
 import { Map as GameMap, World, Position } from '@atsu/choukai';
 import { GameRenderer } from '../src/index';
-
-interface IUnitPosition {
-  unitId: string;
-  mapId: string;
-  position: Position;
-}
+import { BaseUnit } from '@atsu/atago';
 
 // Create a sample game world for demonstration
 const createDemoWorld = (): World => {
@@ -64,33 +59,36 @@ const createDemoWorld = (): World => {
 
 const DemoApp = () => {
   const [world, setWorld] = useState<World | null>(null);
-  const [unitNames, setUnitNames] = useState<Record<string, string>>({});
-  const [unitPositions, setUnitPositions] = useState<Record<string, IUnitPosition>>({});
+  const [units, setUnits] = useState<Record<string, BaseUnit>>({});
 
   useEffect(() => {
     // Initialize the demo world
     const demoWorld = createDemoWorld();
     setWorld(demoWorld);
 
-    // Set up unit names
-    setUnitNames({
-      'PLAYER1': 'Hero',
-      'ENEMY1': 'Goblin',
-      'NPC1': 'Merchant',
-      'GUARD1': 'Guard',
-      'TRADER1': 'Trader',
+    // Create units with position properties
+    const player = new BaseUnit('PLAYER1', 'Hero', 'player');
+    player.setProperty('position', { mapId: 'Main Realm', position: new Position(1, 1) });
+
+    const enemy = new BaseUnit('ENEMY1', 'Goblin', 'enemy');
+    enemy.setProperty('position', { mapId: 'Main Realm', position: new Position(8, 2) });
+
+    const npc = new BaseUnit('NPC1', 'Merchant', 'npc');
+    npc.setProperty('position', { mapId: 'Main Realm', position: new Position(10, 5) });
+
+    const guard = new BaseUnit('GUARD1', 'Guard', 'guard');
+    guard.setProperty('position', { mapId: 'Forest Path', position: new Position(5, 3) });
+
+    const trader = new BaseUnit('TRADER1', 'Trader', 'trader');
+    trader.setProperty('position', { mapId: 'Forest Path', position: new Position(6, 4) });
+
+    setUnits({
+      'PLAYER1': player,
+      'ENEMY1': enemy,
+      'NPC1': npc,
+      'GUARD1': guard,
+      'TRADER1': trader,
     });
-
-    // Set up unit positions manually since units aren't stored in the maps directly
-    const positions: Record<string, IUnitPosition> = {
-      'PLAYER1': { unitId: 'PLAYER1', mapId: 'Main Realm', position: new Position(1, 1) },
-      'ENEMY1': { unitId: 'ENEMY1', mapId: 'Main Realm', position: new Position(8, 2) },
-      'NPC1': { unitId: 'NPC1', mapId: 'Main Realm', position: new Position(10, 5) },
-      'GUARD1': { unitId: 'GUARD1', mapId: 'Forest Path', position: new Position(5, 3) },
-      'TRADER1': { unitId: 'TRADER1', mapId: 'Forest Path', position: new Position(6, 4) },
-    };
-
-    setUnitPositions(positions);
   }, []);
 
   if (!world) {
@@ -104,8 +102,8 @@ const DemoApp = () => {
       </Box>
       <GameRenderer
         world={world}
-        unitNames={unitNames}
-        unitPositions={unitPositions}
+        units={units}
+        config={{ showUnitPositions: true }}
       />
       <Newline />
       <Box flexDirection="row" justifyContent="center">

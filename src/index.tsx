@@ -1,16 +1,11 @@
 import { render } from 'ink';
 import type { Map as GameMap, World, Position } from '@atsu/choukai';
-import type { BaseUnit } from '@atsu/atago';
+import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 import { MapRenderer } from './components/MapRenderer';
-import { GameRenderer, IGameRendererConfig } from './components/GameRenderer';
+import { GameRenderer } from './components/GameRenderer';
+import type { IGameRendererConfig } from './types';
 
-export { MapRenderer, GameRenderer };
-
-interface IUnitPosition {
-  unitId: string;
-  mapId: string;
-  position: Position;
-}
+export { MapRenderer, GameRenderer, IGameRendererConfig };
 
 // Convenience function to render a single map
 export const renderMap = (
