@@ -1,7 +1,8 @@
 import { render } from 'ink';
 import type { Map as GameMap, World, Position } from '@atsu/choukai';
+import type { BaseUnit } from '@atsu/atago';
 import { MapRenderer } from './components/MapRenderer';
-import { GameRenderer } from './components/GameRenderer';
+import { GameRenderer, IGameRendererConfig } from './components/GameRenderer';
 
 export { MapRenderer, GameRenderer };
 
@@ -14,7 +15,7 @@ interface IUnitPosition {
 // Convenience function to render a single map
 export const renderMap = (
   map: GameMap,
-  unitNames?: Record<string, string>,
+  units?: Record<string, BaseUnit>,
   options?: {
     showCoordinates?: boolean;
     cellWidth?: number;
@@ -27,29 +28,27 @@ export const renderMap = (
   const { waitUntilExit } = render(
     <MapRenderer
       map={map}
-      unitNames={unitNames}
+      units={units}
       {...options}
     />
   );
-  
+
   return waitUntilExit;
 };
 
 // Convenience function to render the entire game world
 export const renderGame = (
   world: World,
-  unitNames?: Record<string, string>,
-  unitPositions?: Record<string, IUnitPosition>,
-  selectedMap?: string
+  units?: Record<string, BaseUnit>,
+  config: IGameRendererConfig = {}
 ) => {
   const { waitUntilExit } = render(
     <GameRenderer
       world={world}
-      unitNames={unitNames}
-      unitPositions={unitPositions}
-      selectedMap={selectedMap}
+      units={units}
+      config={config}
     />
   );
-  
+
   return waitUntilExit;
 };

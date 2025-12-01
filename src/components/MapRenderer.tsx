@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, Newline } from 'ink';
 import type { Map as GameMap, Position } from '@atsu/choukai';
+import type { BaseUnit } from '@atsu/atago';
+
+interface IUnitPosition {
+  unitId: string;
+  mapId: string;
+  position: Position;
+}
 
 interface MapRendererProps {
   map: GameMap;
-  unitNames?: Record<string, string>;
-  unitPositions?: Record<string, { mapId: string; position: Position }>;
+  units?: Record<string, BaseUnit>;
   showCoordinates?: boolean;
   cellWidth?: number;
   showUnits?: boolean;
@@ -44,7 +50,7 @@ const UNIT_COLOR = 'green';
 
 export const MapRenderer: React.FC<MapRendererProps> = ({
   map,
-  unitNames = {},
+  units = {},
   showCoordinates = true,
   cellWidth = 1,
   showUnits = true,
@@ -72,9 +78,18 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         let terrainType = 'grass';
 
         if (showUnits) {
-          const unitId = map.getUnitAt(x, y);
-          if (unitId) {
-            const unitName = unitNames[unitId] || unitId;
+          // Find a unit at this position by checking their stored positions
+          const unitAtPosition = Object.values(units).find(unit => {
+            const positionData = unit.getPropertyValue('position');
+            return (
+              positionData?.mapId === map.name &&
+              positionData.position.x === x &&
+              positionData.position.y === y
+            );
+          });
+
+          if (unitAtPosition) {
+            const unitName = unitAtPosition.name || unitAtPosition.id;
             cellContent = unitName.charAt(0).toUpperCase();
             isUnit = true;
           }
@@ -100,7 +115,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
     }
 
     setMapState(updatedMap);
-  }, [map, unitNames, showCoordinates, cellWidth, showUnits, showTerrain, compactView]);
+  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView, useColors]);
 
   return (
     <Box flexDirection="column">

@@ -32,7 +32,7 @@ var TERRAIN_COLORS = {
 var UNIT_COLOR = "green";
 var MapRenderer = ({
   map,
-  unitNames = {},
+  units = {},
   showCoordinates = true,
   cellWidth = 1,
   showUnits = true,
@@ -54,9 +54,12 @@ var MapRenderer = ({
         let isUnit = false;
         let terrainType = "grass";
         if (showUnits) {
-          const unitId = map.getUnitAt(x, y);
-          if (unitId) {
-            const unitName = unitNames[unitId] || unitId;
+          const unitAtPosition = Object.values(units).find((unit) => {
+            const positionData = unit.getPropertyValue("position");
+            return positionData?.mapId === map.name && positionData.position.x === x && positionData.position.y === y;
+          });
+          if (unitAtPosition) {
+            const unitName = unitAtPosition.name || unitAtPosition.id;
             cellContent = unitName.charAt(0).toUpperCase();
             isUnit = true;
           }
@@ -76,7 +79,7 @@ var MapRenderer = ({
       updatedMap.push(row);
     }
     setMapState(updatedMap);
-  }, [map, unitNames, showCoordinates, cellWidth, showUnits, showTerrain, compactView]);
+  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView, useColors]);
   return /* @__PURE__ */ jsxs(Box, { flexDirection: "column", children: [
     /* @__PURE__ */ jsx(Text, { bold: true, children: `Map: ${map.name} (${map.width}x${map.height})` }),
     /* @__PURE__ */ jsx(Newline, {}),
@@ -92,22 +95,11 @@ import { Box as Box2, Text as Text2, Newline as Newline2 } from "ink";
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var GameRenderer = ({
   world,
-  unitNames = {},
-  unitPositions = {},
-  selectedMap
+  units = {},
+  config = {}
 }) => {
   const maps = world.getAllMaps();
-  const mapsToRender = selectedMap ? maps.filter((map) => map.name === selectedMap) : maps;
-  const createUnitMap = (map) => {
-    const mapUnits = {};
-    Object.entries(unitNames).forEach(([unitId, name]) => {
-      const pos = unitPositions[unitId];
-      if (pos && pos.mapId === map.name) {
-        mapUnits[unitId] = name;
-      }
-    });
-    return mapUnits;
-  };
+  const mapsToRender = config.selectedMap ? maps.filter((map) => map.name === config.selectedMap) : maps;
   return /* @__PURE__ */ jsxs2(Box2, { flexDirection: "column", padding: 1, children: [
     /* @__PURE__ */ jsxs2(Box2, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1, children: [
       /* @__PURE__ */ jsx2(Text2, { bold: true, color: "cyan", children: "Takao Engine - Game View" }),
@@ -118,7 +110,7 @@ var GameRenderer = ({
         MapRenderer,
         {
           map,
-          unitNames: createUnitMap(map),
+          units,
           showCoordinates: true,
           cellWidth: 1,
           showUnits: true,
@@ -129,51 +121,54 @@ var GameRenderer = ({
       ),
       index < mapsToRender.length - 1 && /* @__PURE__ */ jsx2(Newline2, {})
     ] }, map.name)),
-    Object.keys(unitPositions).length > 0 && /* @__PURE__ */ jsxs2(Box2, { flexDirection: "column", marginTop: 1, children: [
+    config.showUnitPositions && Object.keys(units).length > 0 && /* @__PURE__ */ jsxs2(Box2, { flexDirection: "column", marginTop: 1, children: [
       /* @__PURE__ */ jsx2(Text2, { bold: true, children: "Unit Positions:" }),
-      Object.entries(unitPositions).map(([unitId, posInfo]) => {
-        const unitName = unitNames[unitId] || unitId;
-        return /* @__PURE__ */ jsxs2(Text2, { children: [
-          unitName,
-          " (",
-          unitId.substring(0, 8),
-          "...) at ",
-          posInfo.mapId,
-          " (",
-          posInfo.position.x,
-          ", ",
-          posInfo.position.y,
-          ")"
-        ] }, unitId);
-      })
+      Object.entries(units).map(([unitId, unit]) => {
+        const positionData = unit.getPropertyValue("position");
+        if (positionData) {
+          const unitName = unit.name || unitId;
+          return /* @__PURE__ */ jsxs2(Text2, { children: [
+            unitName,
+            " (",
+            unitId.substring(0, 8),
+            "...) at ",
+            positionData.mapId,
+            " (",
+            positionData.position.x,
+            ", ",
+            positionData.position.y,
+            ")"
+          ] }, unitId);
+        }
+        return null;
+      }).filter(Boolean)
     ] })
   ] });
 };
 
 // src/index.tsx
 import { jsx as jsx3 } from "react/jsx-runtime";
-var renderMap = (map, unitNames, options) => {
+var renderMap = (map, units, options) => {
   const { waitUntilExit } = render(
     /* @__PURE__ */ jsx3(
       MapRenderer,
       {
         map,
-        unitNames,
+        units,
         ...options
       }
     )
   );
   return waitUntilExit;
 };
-var renderGame = (world, unitNames, unitPositions, selectedMap) => {
+var renderGame = (world, units, config = {}) => {
   const { waitUntilExit } = render(
     /* @__PURE__ */ jsx3(
       GameRenderer,
       {
         world,
-        unitNames,
-        unitPositions,
-        selectedMap
+        units,
+        config
       }
     )
   );

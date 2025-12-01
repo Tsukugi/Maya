@@ -59,7 +59,7 @@ var TERRAIN_COLORS = {
 var UNIT_COLOR = "green";
 var MapRenderer = ({
   map,
-  unitNames = {},
+  units = {},
   showCoordinates = true,
   cellWidth = 1,
   showUnits = true,
@@ -81,9 +81,12 @@ var MapRenderer = ({
         let isUnit = false;
         let terrainType = "grass";
         if (showUnits) {
-          const unitId = map.getUnitAt(x, y);
-          if (unitId) {
-            const unitName = unitNames[unitId] || unitId;
+          const unitAtPosition = Object.values(units).find((unit) => {
+            const positionData = unit.getPropertyValue("position");
+            return positionData?.mapId === map.name && positionData.position.x === x && positionData.position.y === y;
+          });
+          if (unitAtPosition) {
+            const unitName = unitAtPosition.name || unitAtPosition.id;
             cellContent = unitName.charAt(0).toUpperCase();
             isUnit = true;
           }
@@ -103,7 +106,7 @@ var MapRenderer = ({
       updatedMap.push(row);
     }
     setMapState(updatedMap);
-  }, [map, unitNames, showCoordinates, cellWidth, showUnits, showTerrain, compactView]);
+  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView, useColors]);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_ink.Box, { flexDirection: "column", children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Text, { bold: true, children: `Map: ${map.name} (${map.width}x${map.height})` }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ink.Newline, {}),
@@ -119,22 +122,11 @@ var import_ink2 = require("ink");
 var import_jsx_runtime2 = require("react/jsx-runtime");
 var GameRenderer = ({
   world,
-  unitNames = {},
-  unitPositions = {},
-  selectedMap
+  units = {},
+  config = {}
 }) => {
   const maps = world.getAllMaps();
-  const mapsToRender = selectedMap ? maps.filter((map) => map.name === selectedMap) : maps;
-  const createUnitMap = (map) => {
-    const mapUnits = {};
-    Object.entries(unitNames).forEach(([unitId, name]) => {
-      const pos = unitPositions[unitId];
-      if (pos && pos.mapId === map.name) {
-        mapUnits[unitId] = name;
-      }
-    });
-    return mapUnits;
-  };
+  const mapsToRender = config.selectedMap ? maps.filter((map) => map.name === config.selectedMap) : maps;
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", padding: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "row", justifyContent: "space-between", marginBottom: 1, children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { bold: true, color: "cyan", children: "Takao Engine - Game View" }),
@@ -145,7 +137,7 @@ var GameRenderer = ({
         MapRenderer,
         {
           map,
-          unitNames: createUnitMap(map),
+          units,
           showCoordinates: true,
           cellWidth: 1,
           showUnits: true,
@@ -156,51 +148,54 @@ var GameRenderer = ({
       ),
       index < mapsToRender.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Newline, {})
     ] }, map.name)),
-    Object.keys(unitPositions).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", marginTop: 1, children: [
+    config.showUnitPositions && Object.keys(units).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Box, { flexDirection: "column", marginTop: 1, children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_ink2.Text, { bold: true, children: "Unit Positions:" }),
-      Object.entries(unitPositions).map(([unitId, posInfo]) => {
-        const unitName = unitNames[unitId] || unitId;
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Text, { children: [
-          unitName,
-          " (",
-          unitId.substring(0, 8),
-          "...) at ",
-          posInfo.mapId,
-          " (",
-          posInfo.position.x,
-          ", ",
-          posInfo.position.y,
-          ")"
-        ] }, unitId);
-      })
+      Object.entries(units).map(([unitId, unit]) => {
+        const positionData = unit.getPropertyValue("position");
+        if (positionData) {
+          const unitName = unit.name || unitId;
+          return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_ink2.Text, { children: [
+            unitName,
+            " (",
+            unitId.substring(0, 8),
+            "...) at ",
+            positionData.mapId,
+            " (",
+            positionData.position.x,
+            ", ",
+            positionData.position.y,
+            ")"
+          ] }, unitId);
+        }
+        return null;
+      }).filter(Boolean)
     ] })
   ] });
 };
 
 // src/index.tsx
 var import_jsx_runtime3 = require("react/jsx-runtime");
-var renderMap = (map, unitNames, options) => {
+var renderMap = (map, units, options) => {
   const { waitUntilExit } = (0, import_ink3.render)(
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
       MapRenderer,
       {
         map,
-        unitNames,
+        units,
         ...options
       }
     )
   );
   return waitUntilExit;
 };
-var renderGame = (world, unitNames, unitPositions, selectedMap) => {
+var renderGame = (world, units, config = {}) => {
   const { waitUntilExit } = (0, import_ink3.render)(
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
       GameRenderer,
       {
         world,
-        unitNames,
-        unitPositions,
-        selectedMap
+        units,
+        config
       }
     )
   );

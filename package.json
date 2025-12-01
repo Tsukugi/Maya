@@ -25,11 +25,10 @@
     "react",
     "typescript"
   ],
-  "author": "Tsukugi",
+  "author": "Tsukugi <Tsukugi@proton.me>",
   "license": "MIT",
   "dependencies": {
     "@atsu/choukai": "file:../Choukai",
-    "@atsu/takao": "file:../Takao",
     "ink": "^4.0.0",
     "react": "^18.0.0"
   },

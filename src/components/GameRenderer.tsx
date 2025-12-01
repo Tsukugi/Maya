@@ -1,45 +1,35 @@
 import React from 'react';
 import { Box, Text, Newline } from 'ink';
 import type { Map as GameMap, World, Position } from '@atsu/choukai';
+import type { BaseUnit } from '@atsu/atago';
 import { MapRenderer } from './MapRenderer';
 
-interface IUnitPosition {
+export interface IUnitPosition {
   unitId: string;
   mapId: string;
   position: Position;
 }
 
+export interface IGameRendererConfig {
+  showUnitPositions?: boolean;
+  selectedMap?: string | undefined;
+}
+
 interface GameRendererProps {
   world: World;
-  unitNames?: Record<string, string>;
-  unitPositions?: Record<string, IUnitPosition>;
-  selectedMap?: string;
+  units?: Record<string, BaseUnit>;
+  config: IGameRendererConfig
 }
 
 export const GameRenderer: React.FC<GameRendererProps> = ({
   world,
-  unitNames = {},
-  unitPositions = {},
-  selectedMap,
+  units = {},
+  config = {}
 }) => {
   const maps = world.getAllMaps();
-  const mapsToRender = selectedMap 
-    ? maps.filter(map => map.name === selectedMap)
+  const mapsToRender = config.selectedMap
+    ? maps.filter(map => map.name === config.selectedMap)
     : maps;
-
-  // Create unit mapping for each map
-  const createUnitMap = (map: GameMap): Record<string, string> => {
-    const mapUnits: Record<string, string> = {};
-    
-    Object.entries(unitNames).forEach(([unitId, name]) => {
-      const pos = unitPositions[unitId];
-      if (pos && pos.mapId === map.name) {
-        mapUnits[unitId] = name;
-      }
-    });
-    
-    return mapUnits;
-  };
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -47,7 +37,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({
         <Text bold color="cyan">Takao Engine - Game View</Text>
         <Text color="gray">{new Date().toLocaleTimeString()}</Text>
       </Box>
-      
+
       {mapsToRender.length === 0 ? (
         <Text color="yellow">No maps available</Text>
       ) : (
@@ -55,7 +45,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({
           <Box key={map.name} flexDirection="column" marginBottom={2}>
             <MapRenderer
               map={map}
-              unitNames={createUnitMap(map)}
+              units={units}
               showCoordinates={true}
               cellWidth={1}
               showUnits={true}
@@ -63,26 +53,30 @@ export const GameRenderer: React.FC<GameRendererProps> = ({
               compactView={true}
               useColors={true}
             />
-            
+
             {index < mapsToRender.length - 1 && <Newline />}
           </Box>
         ))
       )}
-      
       {/* Unit positions summary */}
-      {Object.keys(unitPositions).length > 0 && (
-        <Box flexDirection="column" marginTop={1}>
-          <Text bold>Unit Positions:</Text>
-          {Object.entries(unitPositions).map(([unitId, posInfo]) => {
-            const unitName = unitNames[unitId] || unitId;
-            return (
-              <Text key={unitId}>
-                {unitName} ({unitId.substring(0, 8)}...) at {posInfo.mapId} ({posInfo.position.x}, {posInfo.position.y})
-              </Text>
-            );
-          })}
-        </Box>
-      )}
+      {config.showUnitPositions &&
+        Object.keys(units).length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Text bold>Unit Positions:</Text>
+            {Object.entries(units).map(([unitId, unit]) => {
+              const positionData = unit.getPropertyValue('position');
+              if (positionData) {
+                const unitName = unit.name || unitId;
+                return (
+                  <Text key={unitId}>
+                    {unitName} ({unitId.substring(0, 8)}...) at {positionData.mapId} ({positionData.position.x}, {positionData.position.y})
+                  </Text>
+                );
+              }
+              return null;
+            }).filter(Boolean)}
+          </Box>
+        )}
     </Box>
   );
 };

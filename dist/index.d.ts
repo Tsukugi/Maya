@@ -1,13 +1,10 @@
-import { Map, Position, World } from '@atsu/choukai';
+import { Map, World } from '@atsu/choukai';
+import { BaseUnit } from '@atsu/atago';
 import React from 'react';
 
 interface MapRendererProps {
     map: Map;
-    unitNames?: Record<string, string>;
-    unitPositions?: Record<string, {
-        mapId: string;
-        position: Position;
-    }>;
+    units?: Record<string, BaseUnit>;
     showCoordinates?: boolean;
     cellWidth?: number;
     showUnits?: boolean;
@@ -17,25 +14,18 @@ interface MapRendererProps {
 }
 declare const MapRenderer: React.FC<MapRendererProps>;
 
-interface IUnitPosition$1 {
-    unitId: string;
-    mapId: string;
-    position: Position;
+interface IGameRendererConfig {
+    showUnitPositions?: boolean;
+    selectedMap?: string | undefined;
 }
 interface GameRendererProps {
     world: World;
-    unitNames?: Record<string, string>;
-    unitPositions?: Record<string, IUnitPosition$1>;
-    selectedMap?: string;
+    units?: Record<string, BaseUnit>;
+    config: IGameRendererConfig;
 }
 declare const GameRenderer: React.FC<GameRendererProps>;
 
-interface IUnitPosition {
-    unitId: string;
-    mapId: string;
-    position: Position;
-}
-declare const renderMap: (map: Map, unitNames?: Record<string, string>, options?: {
+declare const renderMap: (map: Map, units?: Record<string, BaseUnit>, options?: {
     showCoordinates?: boolean;
     cellWidth?: number;
     showUnits?: boolean;
@@ -43,6 +33,6 @@ declare const renderMap: (map: Map, unitNames?: Record<string, string>, options?
     compactView?: boolean;
     useColors?: boolean;
 }) => () => Promise<void>;
-declare const renderGame: (world: World, unitNames?: Record<string, string>, unitPositions?: Record<string, IUnitPosition>, selectedMap?: string) => () => Promise<void>;
+declare const renderGame: (world: World, units?: Record<string, BaseUnit>, config?: IGameRendererConfig) => () => Promise<void>;
 
 export { GameRenderer, MapRenderer, renderGame, renderMap };
