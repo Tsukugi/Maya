@@ -3,11 +3,13 @@ import { Box, Text, Newline } from 'ink';
 import type { Map as GameMap, World, Position } from '@atsu/choukai';
 import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 import { MapRenderer } from './MapRenderer';
-import type { IGameRendererConfig } from '../types';
+import { ActionDiary } from './ActionDiary';
+import type { IGameRendererConfig, DiaryEntry } from '../types';
 
 interface GameRendererProps {
   world: World;
   units?: Record<string, BaseUnit>;
+  diaryEntries?: DiaryEntry[];
   config: IGameRendererConfig
 }
 
@@ -42,6 +44,7 @@ const UnitPositionsDisplay = memo(({ units, showUnitPositions }: {
 export const GameRenderer: React.FC<GameRendererProps> = memo(({
   world,
   units = {},
+  diaryEntries = [],
   config = {}
 }) => {
   // Memoize the maps to render to prevent unnecessary recalculations
@@ -52,36 +55,52 @@ export const GameRenderer: React.FC<GameRendererProps> = memo(({
       : maps;
   }, [world, config.selectedMap]);
 
+  // Calculate effective heights - default to 30 rows if no height specified, max 50
+  const diaryHeight = config.diaryMaxHeight !== undefined
+    ? Math.min(config.diaryMaxHeight, 50)
+    : 30; // Default height
+
   return (
-    <Box flexDirection="column" padding={1}>
-      <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
-        <Text bold color="cyan">Takao Engine - Game View</Text>
-        {/* Remove the constantly updating time to reduce flickering */}
-        {/* <Text color="gray">{new Date().toLocaleTimeString()}</Text> */}
-      </Box>
+    <Box flexDirection="row" padding={1} height="100%">
+      {/* Left column: Map renderer */}
+      <Box flexDirection="column" width="70%" paddingRight={1} borderStyle="single" height={diaryHeight}>
+        <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
+          <Text bold color="cyan">Takao Engine - Game View</Text>
+        </Box>
 
-      {mapsToRender.length === 0 ? (
-        <Text color="yellow">No maps available</Text>
-      ) : (
-        mapsToRender.map((map, index) => (
-          <Box key={map.name} flexDirection="column" marginBottom={2}>
-            <MapRenderer
-              map={map}
-              units={units}
-              showCoordinates={true}
-              cellWidth={1}
-              showUnits={true}
-              showTerrain={true}
-              compactView={true}
-              useColors={true}
-            />
+        {mapsToRender.length === 0 ? (
+          <Text color="yellow">No maps available</Text>
+        ) : (
+          mapsToRender.map((map, index) => (
+            <Box key={map.name} flexDirection="column" marginBottom={2}>
+              <MapRenderer
+                map={map}
+                units={units}
+                showCoordinates={true}
+                cellWidth={1}
+                showUnits={true}
+                showTerrain={true}
+                compactView={true}
+                useColors={true}
+              />
 
-            {index < mapsToRender.length - 1 && <Newline />}
-          </Box>
-        ))
+              {index < mapsToRender.length - 1 && <Newline />}
+            </Box>
+          ))
+        )}
+       </Box>
+
+      {/* Right column: Action diary */}
+      {config.showDiary !== false && (
+        <Box flexDirection="column" width="30%" paddingLeft={1} borderStyle="single">
+          <ActionDiary
+            diaryEntries={diaryEntries}
+            maxEntries={config.diaryMaxEntries || 20}
+            maxHeight={config.diaryMaxHeight || 30}
+            title={config.diaryTitle || 'Action Diary'}
+          />
+        </Box>
       )}
-      {/* Unit positions summary */}
-      <UnitPositionsDisplay units={units} showUnitPositions={config.showUnitPositions} />
     </Box>
   );
 });

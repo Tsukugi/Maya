@@ -10,6 +10,7 @@ import { render } from 'ink';
 import { Map as GameMap, World, Position } from '@atsu/choukai';
 import { GameRenderer } from '../src/index';
 import { BaseUnit } from '@atsu/atago';
+import type { DiaryEntry } from '../src/types';
 
 // Create a sample game world for demonstration
 const createDemoWorld = (): World => {
@@ -60,6 +61,7 @@ const createDemoWorld = (): World => {
 const DemoApp = () => {
   const [world, setWorld] = useState<World | null>(null);
   const [units, setUnits] = useState<Record<string, BaseUnit>>({});
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
 
   useEffect(() => {
     // Initialize the demo world
@@ -89,6 +91,66 @@ const DemoApp = () => {
       'GUARD1': guard,
       'TRADER1': trader,
     });
+
+    // Create some sample diary entries to demonstrate the functionality
+    const demoDiary: DiaryEntry[] = [
+      {
+        turn: 1,
+        timestamp: new Date(Date.now() - 30000).toISOString(),
+        action: {
+          player: 'Hero',
+          type: 'move',
+          description: 'Hero moves to position (2, 2)',
+        }
+      },
+      {
+        turn: 1,
+        timestamp: new Date(Date.now() - 25000).toISOString(),
+        action: {
+          player: 'Goblin',
+          type: 'attack',
+          description: 'Goblin attacks Hero with sword',
+        }
+      },
+      {
+        turn: 2,
+        timestamp: new Date(Date.now() - 20000).toISOString(),
+        action: {
+          player: 'Merchant',
+          type: 'trade',
+          description: 'Merchant trades items with Hero',
+        }
+      },
+      {
+        turn: 2,
+        timestamp: new Date(Date.now() - 15000).toISOString(),
+        action: {
+          player: 'Guard',
+          type: 'patrol',
+          description: 'Guard patrols the Forest Path',
+        }
+      },
+      {
+        turn: 3,
+        timestamp: new Date(Date.now() - 10000).toISOString(),
+        action: {
+          player: 'Hero',
+          type: 'heal',
+          description: 'Hero uses healing potion',
+        }
+      },
+      {
+        turn: 3,
+        timestamp: new Date(Date.now() - 5000).toISOString(),
+        action: {
+          player: 'Trader',
+          type: 'buy',
+          description: 'Trader buys equipment from Merchant',
+        }
+      }
+    ];
+
+    setDiaryEntries(demoDiary);
   }, []);
 
   if (!world) {
@@ -98,12 +160,19 @@ const DemoApp = () => {
   return (
     <Box flexDirection="column">
       <Box flexDirection="row" justifyContent="center" marginBottom={1}>
-        <Text bold color="magenta">Maya Rendering System Demo</Text>
+        <Text bold color="magenta">Maya Rendering System Demo - 2 Column Layout</Text>
       </Box>
       <GameRenderer
         world={world}
         units={units}
-        config={{ showUnitPositions: true }}
+        diaryEntries={diaryEntries}
+        config={{
+          showUnitPositions: true,
+          showDiary: true,
+          diaryMaxEntries: 10,
+          diaryMaxHeight: 25, // Set height to 25 rows
+          diaryTitle: 'Game Action Diary'
+        }}
       />
       <Newline />
       <Box flexDirection="row" justifyContent="center">

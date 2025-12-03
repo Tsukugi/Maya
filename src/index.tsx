@@ -3,9 +3,10 @@ import type { Map as GameMap, World, Position } from '@atsu/choukai';
 import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 import { MapRenderer } from './components/MapRenderer';
 import { GameRenderer } from './components/GameRenderer';
-import type { IGameRendererConfig } from './types';
+import { ActionDiary } from './components/ActionDiary';
+import type { IGameRendererConfig, DiaryEntry } from './types';
 
-export { MapRenderer, GameRenderer, IGameRendererConfig };
+export { MapRenderer, GameRenderer, ActionDiary, IGameRendererConfig };
 
 // Convenience function to render a single map
 export const renderMap = (
@@ -35,12 +36,14 @@ export const renderMap = (
 export const renderGame = (
   world: World,
   units?: Record<string, BaseUnit>,
-  config: IGameRendererConfig = {}
+  config: IGameRendererConfig = {},
+  diaryEntries?: DiaryEntry[]
 ) => {
   const { waitUntilExit } = render(
     <GameRenderer
       world={world}
       units={units}
+      diaryEntries={diaryEntries}
       config={config}
     />
   );
