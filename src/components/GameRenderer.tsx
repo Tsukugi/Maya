@@ -88,6 +88,9 @@ export const GameRenderer: React.FC<GameRendererProps> = memo(({
             </Box>
           ))
         )}
+
+        {/* Unit positions display - still shown below the map */}
+        <UnitPositionsDisplay units={units} showUnitPositions={config.showUnitPositions} />
        </Box>
 
       {/* Right column: Action diary */}
