@@ -32,7 +32,7 @@ const TERRAIN_COLORS: Record<string, string> = {
   water: 'blue',
   mountain: 'white',
   forest: 'green',
-  desert: 'yellow',
+  desert: 'orange',
   road: 'gray',
   plains: 'cyan',
   swamp: 'magenta',
@@ -40,7 +40,7 @@ const TERRAIN_COLORS: Record<string, string> = {
   sand: 'yellow',
 };
 
-const UNIT_COLOR = 'green';
+const UNIT_COLOR = 'yellow';
 
 // Single text component for entire map rendering to reduce component overhead
 export const MapRenderer: React.FC<MapRendererProps> = memo(({

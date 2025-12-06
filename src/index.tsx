@@ -6,7 +6,7 @@ import { GameRenderer } from './components/GameRenderer';
 import { ActionDiary } from './components/ActionDiary';
 import type { IGameRendererConfig, DiaryEntry } from './types';
 
-export { MapRenderer, GameRenderer, ActionDiary, IGameRendererConfig };
+export { MapRenderer, GameRenderer, ActionDiary, IGameRendererConfig, DiaryEntry };
 
 // Convenience function to render a single map
 export const renderMap = (
