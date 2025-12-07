@@ -36,6 +36,26 @@ test('MapRenderer should render units on the map', () => {
   unmount();
 });
 
+test('MapRenderer rerenders when unit position changes without new units object', () => {
+  const testMap = new GameMap(4, 4, 'Demo Map');
+  const unit = new BaseUnit('STATIC_UNIT', 'Zenith', 'test');
+  const units = { STATIC_UNIT: unit };
+
+  const { unmount, lastFrame, rerender } = render(
+    <MapRenderer map={testMap} units={units} showCoordinates={false} showTerrain={false} />
+  );
+
+  expect(lastFrame()).not.toContain('Z');
+
+  unit.setProperty('position', { mapId: 'Demo Map', position: new Position(1, 1) });
+  rerender(
+    <MapRenderer map={testMap} units={units} showCoordinates={false} showTerrain={false} />
+  );
+
+  expect(lastFrame()).toContain('Z');
+  unmount();
+});
+
 test('GameRenderer should render a game world with maps', () => {
   const world = new World();
   const testMap = new GameMap(5, 5, 'Test World Map');

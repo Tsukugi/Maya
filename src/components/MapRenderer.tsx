@@ -1,6 +1,6 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Text, Newline } from 'ink';
-import type { Map as GameMap, Position } from '@atsu/choukai';
+import type { Map as GameMap } from '@atsu/choukai';
 import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 
 interface MapRendererProps {
@@ -43,6 +43,22 @@ const TERRAIN_COLORS: Record<string, string> = {
 const UNIT_COLOR = 'yellow';
 
 type RenderCell = { content: string; isUnit: boolean; terrain: string };
+
+const buildUnitsSignature = (units: Record<string, BaseUnit>): string => {
+  const signatures = Object.values(units).map(unit => {
+    const positionData = unit.getPropertyValue<IUnitPosition>('position');
+    if (!positionData) {
+      return `${unit.id}:none`;
+    }
+
+    const { mapId, position } = positionData;
+    const x = position?.x ?? 'n';
+    const y = position?.y ?? 'n';
+    return `${unit.id}:${mapId ?? 'unknown'}:${x},${y}`;
+  });
+
+  return signatures.sort().join('|');
+};
 
 const buildUnitPositionMap = (units: Record<string, BaseUnit>, mapName: string, showUnits: boolean) => {
   const unitPositions = new Map<string, BaseUnit>();
@@ -137,7 +153,7 @@ const groupSegments = (row: RenderCell[], useColors: boolean) => {
 };
 
 // Single text component for entire map rendering to reduce component overhead
-export const MapRenderer: React.FC<MapRendererProps> = memo(({
+export const MapRenderer: React.FC<MapRendererProps> = ({
   map,
   units = {},
   showCoordinates = true,
@@ -147,6 +163,8 @@ export const MapRenderer: React.FC<MapRendererProps> = memo(({
   compactView = true,
   useColors = true,
 }) => {
+  const unitsSignature = buildUnitsSignature(units);
+
   // Build the map rows as simple arrays of renderable cells
   const mapDisplay = useMemo(() => {
     const unitPositions = buildUnitPositionMap(units, map.name, showUnits);
@@ -172,7 +190,7 @@ export const MapRenderer: React.FC<MapRendererProps> = memo(({
     }
 
     return rows;
-  }, [map, units, showCoordinates, cellWidth, showUnits, showTerrain, compactView]); // Removed useColors to avoid unnecessary updates
+  }, [map, unitsSignature, showCoordinates, cellWidth, showUnits, showTerrain, compactView]); // Removed useColors to avoid unnecessary updates
 
   return (
     <Box flexDirection="column">
@@ -193,4 +211,4 @@ export const MapRenderer: React.FC<MapRendererProps> = memo(({
       })}
     </Box>
   );
-});
+};

@@ -1,7 +1,7 @@
-import React, { memo, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Box, Text, Newline, useStdout } from "ink";
-import type { Map as GameMap, World, Position } from "@atsu/choukai";
-import type { BaseUnit, IUnitPosition } from "@atsu/atago";
+import type { World } from "@atsu/choukai";
+import type { BaseUnit } from "@atsu/atago";
 import { MapRenderer } from "./MapRenderer";
 import { ActionDiary } from "./ActionDiary";
 import type { IGameRendererConfig, DiaryEntry } from "../types";
@@ -84,42 +84,40 @@ export const resolveDiaryLayout = (
   };
 };
 
-// Memoized unit positions display
-const UnitPositionsDisplay = memo(
-  ({
-    units,
-    showUnitPositions,
-  }: {
-    units: Record<string, BaseUnit>;
-    showUnitPositions?: boolean;
-  }) => {
-    if (!showUnitPositions || Object.keys(units).length === 0) {
-      return null;
-    }
-
-    return (
-      <Box flexDirection="column" marginTop={1}>
-        <Text bold>Unit Positions:</Text>
-        {Object.entries(units)
-          .map(([unitId, unit]) => {
-            const positionData = unit.getPropertyValue("position");
-            if (positionData) {
-              const unitName = unit.name || unitId;
-              return (
-                <Text key={unitId}>
-                  {unitName} ({unitId.substring(0, 8)}...) at{" "}
-                  {positionData.mapId} ({positionData.position.x},{" "}
-                  {positionData.position.y})
-                </Text>
-              );
-            }
-            return null;
-          })
-          .filter(Boolean)}
-      </Box>
-    );
+// Unit positions display
+const UnitPositionsDisplay = ({
+  units,
+  showUnitPositions,
+}: {
+  units: Record<string, BaseUnit>;
+  showUnitPositions?: boolean;
+}) => {
+  if (!showUnitPositions || Object.keys(units).length === 0) {
+    return null;
   }
-);
+
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Text bold>Unit Positions:</Text>
+      {Object.entries(units)
+        .map(([unitId, unit]) => {
+          const positionData = unit.getPropertyValue("position");
+          if (positionData) {
+            const unitName = unit.name || unitId;
+            return (
+              <Text key={unitId}>
+                {unitName} ({unitId.substring(0, 8)}...) at{" "}
+                {positionData.mapId} ({positionData.position.x},{" "}
+                {positionData.position.y})
+              </Text>
+            );
+          }
+          return null;
+        })
+        .filter(Boolean)}
+    </Box>
+  );
+};
 
 const shouldUseColumnLayout = (terminalWidth: number) => terminalWidth < 80;
 
@@ -133,102 +131,105 @@ const getMapFlexBasis = (config: IGameRendererConfig) =>
     ? `${config.mapWidthPercentage}%`
     : "60%"; // Reduced from 70% to give more space to diary
 
-export const GameRenderer: React.FC<GameRendererProps> = memo(
-  ({ world, units = {}, diaryEntries = [], config = {} }) => {
-    const { stdout } = useStdout();
-    const terminalWidth = stdout.columns || 80; // Default to 80 if width is unavailable
+export const GameRenderer: React.FC<GameRendererProps> = ({
+  world,
+  units = {},
+  diaryEntries = [],
+  config = {},
+}) => {
+  const { stdout } = useStdout();
+  const terminalWidth = stdout.columns || 80; // Default to 80 if width is unavailable
 
-    const useColumnLayout = shouldUseColumnLayout(terminalWidth);
-    const mapsToRender = useMemo(
-      () => selectMapsToRender(world, config.selectedMap),
-      [world, config.selectedMap]
-    );
-    const mapFlexBasis = getMapFlexBasis(config);
-    const diaryLayout = resolveDiaryLayout(
-      config,
-      terminalWidth,
-      useColumnLayout
-    );
+  const useColumnLayout = shouldUseColumnLayout(terminalWidth);
+  const mapsToRender = useMemo(
+    () => selectMapsToRender(world, config.selectedMap),
+    [world, config.selectedMap]
+  );
+  const mapFlexBasis = getMapFlexBasis(config);
+  const diaryLayout = resolveDiaryLayout(
+    config,
+    terminalWidth,
+    useColumnLayout
+  );
 
-    return (
+  return (
+    <Box
+      flexDirection={useColumnLayout ? "column" : "row"}
+      padding={1}
+      height="100%"
+    >
+      {/* Left column (or top in column layout): Map renderer */}
       <Box
-        flexDirection={useColumnLayout ? "column" : "row"}
-        padding={1}
-        height="100%"
+        flexDirection="column"
+        flexGrow={useColumnLayout ? 1 : 1}
+        flexShrink={1}
+        flexBasis={useColumnLayout ? "0" : mapFlexBasis}
+        paddingRight={useColumnLayout ? 0 : 1}
+        paddingBottom={useColumnLayout ? 1 : 0}
+        borderStyle="single"
+        height={useColumnLayout ? "50%" : diaryLayout.height}
       >
-        {/* Left column (or top in column layout): Map renderer */}
+        <Box
+          flexDirection="row"
+          justifyContent="space-between"
+          marginBottom={1}
+        >
+          <Text bold color="cyan">
+            Takao Engine - Game View
+          </Text>
+        </Box>
+
+        {mapsToRender.length === 0 ? (
+          <Text color="yellow">No maps available</Text>
+        ) : (
+          mapsToRender.map((map, index) => (
+            <Box key={map.name} flexDirection="column" marginBottom={2}>
+              <MapRenderer
+                map={map}
+                units={units}
+                showCoordinates={true}
+                cellWidth={1}
+                showUnits={true}
+                showTerrain={true}
+                compactView={true}
+                useColors={true}
+              />
+
+              {index < mapsToRender.length - 1 && <Newline />}
+            </Box>
+          ))
+        )}
+
+        {/* Unit positions display - still shown below the map */}
+        <UnitPositionsDisplay
+          units={units}
+          showUnitPositions={config.showUnitPositions}
+        />
+      </Box>
+
+      {/* Right column (or bottom in column layout): Action diary */}
+      {config.showDiary !== false && (
         <Box
           flexDirection="column"
-          flexGrow={useColumnLayout ? 1 : 1}
+          flexGrow={useColumnLayout ? 0 : 1}
           flexShrink={1}
-          flexBasis={useColumnLayout ? "0" : mapFlexBasis}
-          paddingRight={useColumnLayout ? 0 : 1}
-          paddingBottom={useColumnLayout ? 1 : 0}
+          flexBasis={diaryLayout.flexBasis}
+          minWidth={diaryLayout.minWidth}
+          maxWidth={diaryLayout.maxWidth}
+          paddingLeft={useColumnLayout ? 0 : 1}
+          paddingTop={useColumnLayout ? 1 : 0}
           borderStyle="single"
           height={useColumnLayout ? "50%" : diaryLayout.height}
         >
-          <Box
-            flexDirection="row"
-            justifyContent="space-between"
-            marginBottom={1}
-          >
-            <Text bold color="cyan">
-              Takao Engine - Game View
-            </Text>
-          </Box>
-
-          {mapsToRender.length === 0 ? (
-            <Text color="yellow">No maps available</Text>
-          ) : (
-            mapsToRender.map((map, index) => (
-              <Box key={map.name} flexDirection="column" marginBottom={2}>
-                <MapRenderer
-                  map={map}
-                  units={units}
-                  showCoordinates={true}
-                  cellWidth={1}
-                  showUnits={true}
-                  showTerrain={true}
-                  compactView={true}
-                  useColors={true}
-                />
-
-                {index < mapsToRender.length - 1 && <Newline />}
-              </Box>
-            ))
-          )}
-
-          {/* Unit positions display - still shown below the map */}
-          <UnitPositionsDisplay
-            units={units}
-            showUnitPositions={config.showUnitPositions}
+          <ActionDiary
+            diaryEntries={diaryEntries}
+            maxEntries={config.diaryMaxEntries || 20}
+            maxHeight={config.diaryMaxHeight || 30}
+            title={config.diaryTitle || "Action Diary"}
+            availableWidth={diaryLayout.approxWidth}
           />
         </Box>
-
-        {/* Right column (or bottom in column layout): Action diary */}
-        {config.showDiary !== false && (
-          <Box
-            flexDirection="column"
-            flexGrow={useColumnLayout ? 0 : 1}
-            flexShrink={1}
-            flexBasis={diaryLayout.flexBasis}
-            minWidth={diaryLayout.minWidth}
-            maxWidth={diaryLayout.maxWidth}
-            paddingLeft={useColumnLayout ? 0 : 1}
-            paddingTop={useColumnLayout ? 1 : 0}
-            borderStyle="single"
-            height={useColumnLayout ? "50%" : diaryLayout.height}
-          >
-            <ActionDiary
-              diaryEntries={diaryEntries}
-              maxEntries={config.diaryMaxEntries || 20}
-              maxHeight={config.diaryMaxHeight || 30}
-              title={config.diaryTitle || "Action Diary"}
-              availableWidth={diaryLayout.approxWidth}
-            />
-          </Box>
-        )}
-      </Box>
-    );
-  }
-);
+      )}
+    </Box>
+  );
+};
