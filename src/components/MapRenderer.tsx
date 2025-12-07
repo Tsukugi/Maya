@@ -42,6 +42,100 @@ const TERRAIN_COLORS: Record<string, string> = {
 
 const UNIT_COLOR = 'yellow';
 
+type RenderCell = { content: string; isUnit: boolean; terrain: string };
+
+const buildUnitPositionMap = (units: Record<string, BaseUnit>, mapName: string, showUnits: boolean) => {
+  const unitPositions = new Map<string, BaseUnit>();
+  if (!showUnits) {
+    return unitPositions;
+  }
+
+  for (const unit of Object.values(units)) {
+    const positionData = unit.getPropertyValue<IUnitPosition>('position');
+    if (positionData && positionData.mapId === mapName) {
+      const posKey = `${positionData.position.x},${positionData.position.y}`;
+      unitPositions.set(posKey, unit);
+    }
+  }
+
+  return unitPositions;
+};
+
+const buildRowPrefix = (rowIndex: number, showCoordinates: boolean, compactView: boolean): RenderCell[] => {
+  if (!showCoordinates) {
+    return [];
+  }
+  const coordStr = rowIndex.toString().padStart(2, ' ');
+  return [
+    { content: compactView ? `${coordStr}|` : `${coordStr} |`, isUnit: false, terrain: 'grass' },
+  ];
+};
+
+const renderCellContent = (
+  x: number,
+  y: number,
+  map: GameMap,
+  unitPositions: Map<string, BaseUnit>,
+  { showUnits, showTerrain, cellWidth, compactView }: { showUnits: boolean; showTerrain: boolean; cellWidth: number; compactView: boolean; }
+): RenderCell => {
+  let content = '';
+  let isUnit = false;
+  let terrainType = 'grass';
+
+  if (showUnits) {
+    const unitAtPosition = unitPositions.get(`${x},${y}`);
+    if (unitAtPosition) {
+      const unitName = unitAtPosition.name || unitAtPosition.id;
+      content = unitName.charAt(0).toUpperCase();
+      isUnit = true;
+    }
+  }
+
+  if (!content && showTerrain) {
+    const cell = map.getCell(x, y);
+    terrainType = cell?.terrain || 'grass';
+    content = TERRAIN_SYMBOLS[terrainType] || '?';
+  }
+
+  if (cellWidth > 1) {
+    content = content.padEnd(cellWidth, ' ');
+  } else if (!compactView) {
+    content += ' ';
+  }
+
+  return { content, isUnit, terrain: terrainType };
+};
+
+const groupSegments = (row: RenderCell[], useColors: boolean) => {
+  const segments: Array<{ content: string; color?: string }> = [];
+  let currentSegment = '';
+  let currentColor: string | undefined = undefined;
+  let firstCell = true;
+
+  for (const cellData of row) {
+    const color = useColors
+      ? (cellData.isUnit ? UNIT_COLOR : TERRAIN_COLORS[cellData.terrain])
+      : undefined;
+
+    if (firstCell || color !== currentColor) {
+      if (!firstCell) {
+        segments.push({ content: currentSegment, color: currentColor || undefined });
+      }
+      currentSegment = cellData.content;
+      currentColor = color;
+      firstCell = false;
+    } else {
+      currentSegment += cellData.content;
+    }
+  }
+
+  if (currentSegment) {
+    segments.push({ content: currentSegment, color: currentColor });
+  }
+
+  return segments;
+};
+
 // Single text component for entire map rendering to reduce component overhead
 export const MapRenderer: React.FC<MapRendererProps> = memo(({
   map,
@@ -53,62 +147,25 @@ export const MapRenderer: React.FC<MapRendererProps> = memo(({
   compactView = true,
   useColors = true,
 }) => {
-  // Generate the entire map as a single string to reduce component overhead
+  // Build the map rows as simple arrays of renderable cells
   const mapDisplay = useMemo(() => {
-    // Create a map of unit positions for efficient lookup
-    const unitPositions = new Map<string, BaseUnit>();
-    if (showUnits) {
-      for (const unit of Object.values(units)) {
-        const positionData = unit.getPropertyValue<IUnitPosition>('position');
-        if (positionData && positionData.mapId === map.name) {
-          const posKey = `${positionData.position.x},${positionData.position.y}`;
-          unitPositions.set(posKey, unit);
-        }
-      }
-    }
+    const unitPositions = buildUnitPositionMap(units, map.name, showUnits);
+    const rows: RenderCell[][] = [];
 
-    const rows: Array<Array<{content: string, isUnit: boolean, terrain: string}>> = [];
-
-    // Generate the map display
     for (let y = 0; y < map.height; y++) {
-      const row: Array<{content: string, isUnit: boolean, terrain: string}> = [];
-
-      if (showCoordinates) {
-        const coordStr = y.toString().padStart(2, ' ');
-        row.push({ content: compactView ? `${coordStr}|` : `${coordStr} |`, isUnit: false, terrain: 'grass' });
-      }
+      const row: RenderCell[] = [
+        ...buildRowPrefix(y, showCoordinates, compactView),
+      ];
 
       for (let x = 0; x < map.width; x++) {
-        let cellContent = '';
-        let isUnit = false;
-        let terrainType = 'grass';
-
-        // Efficiently check for a unit at this position
-        if (showUnits) {
-          const posKey = `${x},${y}`;
-          const unitAtPosition = unitPositions.get(posKey);
-
-          if (unitAtPosition) {
-            const unitName = unitAtPosition.name || unitAtPosition.id;
-            cellContent = unitName.charAt(0).toUpperCase();
-            isUnit = true;
-          }
-        }
-
-        if (!cellContent && showTerrain) {
-          const cell = map.getCell(x, y);
-          terrainType = cell?.terrain || 'grass';
-          cellContent = TERRAIN_SYMBOLS[terrainType] || '?';
-        }
-
-        // Pad the cell content to the desired width
-        if (cellWidth > 1) {
-          cellContent = cellContent.padEnd(cellWidth, ' ');
-        } else if (!compactView) {
-          cellContent += ' ';
-        }
-
-        row.push({ content: cellContent, isUnit, terrain: terrainType });
+        row.push(
+          renderCellContent(x, y, map, unitPositions, {
+            showUnits,
+            showTerrain,
+            cellWidth,
+            compactView,
+          })
+        );
       }
 
       rows.push(row);
@@ -122,33 +179,7 @@ export const MapRenderer: React.FC<MapRendererProps> = memo(({
       <Text bold>{`Map: ${map.name} (${map.width}x${map.height})`}</Text>
       <Newline />
       {mapDisplay.map((row, rowIndex) => {
-        // Group consecutive cells with the same color to reduce the number of Text components
-        const segments = [];
-        let currentSegment = '';
-        let currentColor: string | undefined = undefined;
-        let firstCell = true;
-
-        for (const cellData of row) {
-          const color = useColors
-            ? (cellData.isUnit ? UNIT_COLOR : TERRAIN_COLORS[cellData.terrain])
-            : undefined;
-
-          if (firstCell || color !== currentColor) {
-            if (!firstCell) {
-              segments.push({ content: currentSegment, color: currentColor || undefined });
-            }
-            currentSegment = cellData.content;
-            currentColor = color;
-            firstCell = false;
-          } else {
-            currentSegment += cellData.content;
-          }
-        }
-
-        // Add the last segment
-        if (currentSegment) {
-          segments.push({ content: currentSegment, color: currentColor });
-        }
+        const segments = groupSegments(row, useColors);
 
         return (
           <Box key={rowIndex} flexDirection="row">

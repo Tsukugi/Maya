@@ -7,6 +7,10 @@ export interface IGameRendererConfig {
   diaryMaxEntries?: number;
   diaryTitle?: string;
   diaryMaxHeight?: number;
+  mapWidthPercentage?: number;
+  diaryWidthPercentage?: number;
+  minDiaryWidth?: number;
+  maxDiaryWidth?: number | string;
 }
 
 export interface IGameAction {
@@ -35,4 +39,5 @@ export interface IActionDiaryProps {
   maxEntries?: number;
   maxHeight?: number;
   title?: string;
+  availableWidth?: number;
 }
