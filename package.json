@@ -17,6 +17,9 @@
     "format": "prettier --write src",
     "test": "vitest run"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "keywords": [
     "game-engine",
     "terminal",
