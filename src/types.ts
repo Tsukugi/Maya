@@ -32,6 +32,19 @@ export interface DiaryEntry {
     description: string;
     [key: string]: any;
   };
+  statChanges?: Array<{
+    unitId: string;
+    unitName: string;
+    propertyName: string;
+    oldValue: unknown;
+    newValue: unknown;
+  }>;
+  statChangesSummary?: string[];
+  statChangesByUnit?: Record<string, string[]>;
+  statChangesFormatted?: Array<{
+    unit: string;
+    changes: string[];
+  }>;
 }
 
 export interface IActionDiaryProps {

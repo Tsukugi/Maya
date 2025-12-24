@@ -9,6 +9,7 @@ type PreparedEntry = {
   turnColumnWidth: number;
   timeColumnWidth: number;
   descriptionLines: string[];
+  statLines: string[];
   linesNeeded: number;
 };
 
@@ -67,6 +68,10 @@ const buildEntries = (
       availableDescWidth
     );
 
+    const statLines = (entry.statChangesSummary ?? []).flatMap((line) =>
+      wrapText(`↳ Stats: ${line}`, availableDescWidth)
+    );
+
     return {
       entry,
       turnLabel,
@@ -74,7 +79,8 @@ const buildEntries = (
       turnColumnWidth,
       timeColumnWidth,
       descriptionLines,
-      linesNeeded: descriptionLines.length,
+      statLines,
+      linesNeeded: descriptionLines.length + statLines.length,
     };
   });
 };
@@ -163,6 +169,7 @@ export const ActionDiary: React.FC<IActionDiaryProps> = memo(
               const {
                 entry,
                 descriptionLines,
+                statLines,
                 turnLabel,
                 turnColumnWidth,
                 timeColumnWidth,
@@ -178,7 +185,7 @@ export const ActionDiary: React.FC<IActionDiaryProps> = memo(
                 >
                   {descriptionLines.map((line, lineIndex) => (
                     <Box
-                      key={`${entry.turn}-${index}-${lineIndex}`}
+                      key={`${entry.turn}-${index}-desc-${lineIndex}`}
                       flexDirection="row"
                       width="100%"
                       alignItems="flex-start"
@@ -218,6 +225,43 @@ export const ActionDiary: React.FC<IActionDiaryProps> = memo(
                         ) : (
                           <Text>{""}</Text>
                         )}
+                      </Box>
+                    </Box>
+                  ))}
+                  {statLines.map((line, lineIndex) => (
+                    <Box
+                      key={`${entry.turn}-${index}-stat-${lineIndex}`}
+                      flexDirection="row"
+                      width="100%"
+                      alignItems="flex-start"
+                    >
+                      <Box
+                        width={turnColumnWidth}
+                        marginRight={1}
+                        flexShrink={0}
+                      >
+                        <Text>{""}</Text>
+                      </Box>
+                      <Text color="gray">|</Text>
+                      <Box
+                        flexGrow={1}
+                        flexShrink={1}
+                        flexBasis={0}
+                        marginLeft={1}
+                        marginRight={0}
+                        minWidth={0}
+                      >
+                        <Text color="green" dimColor>
+                          {line}
+                        </Text>
+                      </Box>
+                      <Text color="gray">|</Text>
+                      <Box
+                        minWidth={timeColumnWidth}
+                        marginLeft={1}
+                        flexShrink={0}
+                      >
+                        <Text>{""}</Text>
                       </Box>
                     </Box>
                   ))}
