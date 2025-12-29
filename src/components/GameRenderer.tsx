@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { Box, Text, Newline, useStdout } from "ink";
 import type { World } from "@atsu/choukai";
-import type { BaseUnit } from "@atsu/atago";
+import type { BaseUnit, IUnitPosition } from "@atsu/atago";
+import { isUnitPosition } from "@atsu/atago";
 import { MapRenderer } from "./MapRenderer";
 import { ActionDiary } from "./ActionDiary";
 import type { IGameRendererConfig, DiaryEntry } from "../types";
@@ -84,7 +85,6 @@ export const resolveDiaryLayout = (
   };
 };
 
-// Unit positions display
 const UnitPositionsDisplay = ({
   units,
   showUnitPositions,
@@ -101,18 +101,19 @@ const UnitPositionsDisplay = ({
       <Text bold>Unit Positions:</Text>
       {Object.entries(units)
         .map(([unitId, unit]) => {
-          const positionData = unit.getPropertyValue("position");
-          if (positionData) {
-            const unitName = unit.name || unitId;
-            return (
-              <Text key={unitId}>
-                {unitName} ({unitId.substring(0, 8)}...) at{" "}
-                {positionData.mapId} ({positionData.position.x},{" "}
-                {positionData.position.y})
-              </Text>
-            );
+          const positionData =
+            unit.getPropertyValue<IUnitPosition>("position");
+          if (!isUnitPosition(positionData)) {
+            return null;
           }
-          return null;
+
+          const unitName = unit.name || unitId;
+          return (
+            <Text key={unitId}>
+              {unitName} ({unitId.substring(0, 8)}...) at {positionData.mapId} (
+              {positionData.position.x}, {positionData.position.y})
+            </Text>
+          );
         })
         .filter(Boolean)}
     </Box>
