@@ -75,7 +75,11 @@ test('GameRenderer should render units in the game world', () => {
   world.addMap(testMap);
 
   const unit = new BaseUnit('TEST_UNIT', 'TestUnit', 'test');
-  unit.setProperty('position', { mapId: 'Test World Map', position: new Position(2, 2) });
+  unit.setProperty('position', {
+    unitId: 'TEST_UNIT',
+    mapId: 'Test World Map',
+    position: new Position(2, 2),
+  });
   const units = { 'TEST_UNIT': unit };
 
   const { unmount, lastFrame } = render(
