@@ -11,6 +11,7 @@ type PreparedEntry = {
   descriptionLines: string[];
   statLines: string[];
   linesNeeded: number;
+  descColor?: "red" | "yellow";
 };
 
 const wrapText = (text: string, width: number): string[] => {
@@ -72,6 +73,13 @@ const buildEntries = (
       wrapText(`↳ Stats: ${line}`, availableDescWidth)
     );
 
+    const actionType = entry.action.type.toLowerCase?.() ?? "";
+    const severity = actionType.includes("error")
+      ? "error"
+      : actionType.includes("warn")
+        ? "warning"
+        : "info";
+
     return {
       entry,
       turnLabel,
@@ -81,6 +89,8 @@ const buildEntries = (
       descriptionLines,
       statLines,
       linesNeeded: descriptionLines.length + statLines.length,
+      descColor:
+        severity === "error" ? "red" : severity === "warning" ? "yellow" : undefined,
     };
   });
 };
@@ -174,6 +184,7 @@ export const ActionDiary: React.FC<IActionDiaryProps> = memo(
                 turnColumnWidth,
                 timeColumnWidth,
                 timeLabel,
+                descColor,
               } = item;
 
               return (
@@ -210,7 +221,7 @@ export const ActionDiary: React.FC<IActionDiaryProps> = memo(
                         marginRight={0}
                         minWidth={0}
                       >
-                        <Text>{line}</Text>
+                        <Text color={descColor}>{line}</Text>
                       </Box>
                       <Text color="gray">|</Text>
                       <Box

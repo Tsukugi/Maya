@@ -30,7 +30,6 @@ export interface DiaryEntry {
     player: string;
     type: string;
     description: string;
-    [key: string]: any;
   };
   statChanges?: Array<{
     unitId: string;
