@@ -83,11 +83,10 @@ test('GameRenderer should render units in the game world', () => {
   const units = { 'TEST_UNIT': unit };
 
   const { unmount, lastFrame } = render(
-    <GameRenderer world={world} units={units} config={{ showUnitPositions: true }} />
+    <GameRenderer world={world} units={units} config={{}} />
   );
 
   expect(lastFrame()).toContain('T'); // Unit initial on map
-  expect(lastFrame()).toContain('TestUnit'); // Unit in positions display
   unmount();
 });
 

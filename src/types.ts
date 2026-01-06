@@ -7,6 +7,10 @@ export interface IGameRendererConfig {
   diaryMaxEntries?: number;
   diaryTitle?: string;
   diaryMaxHeight?: number;
+  showConsole?: boolean;
+  consoleMaxEntries?: number;
+  consoleTitle?: string;
+  consoleMaxHeight?: number;
   mapWidthPercentage?: number;
   diaryWidthPercentage?: number;
   minDiaryWidth?: number;
@@ -44,6 +48,15 @@ export interface DiaryEntry {
     unit: string;
     changes: string[];
   }>;
+}
+
+export type ConsoleLevel = 'log' | 'info' | 'warn' | 'error' | 'debug' | 'trace';
+
+export interface ConsoleEntry {
+  timestamp: string;
+  level: ConsoleLevel;
+  message: string;
+  prefix?: string;
 }
 
 export interface IActionDiaryProps {

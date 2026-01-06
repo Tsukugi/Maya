@@ -4,9 +4,16 @@ import type { BaseUnit, IUnitPosition } from '@atsu/atago';
 import { MapRenderer } from './components/MapRenderer';
 import { GameRenderer } from './components/GameRenderer';
 import { ActionDiary } from './components/ActionDiary';
-import type { IGameRendererConfig, DiaryEntry } from './types';
+import type { IGameRendererConfig, DiaryEntry, ConsoleEntry } from './types';
 
-export { MapRenderer, GameRenderer, ActionDiary, IGameRendererConfig, DiaryEntry };
+export {
+  MapRenderer,
+  GameRenderer,
+  ActionDiary,
+  IGameRendererConfig,
+  DiaryEntry,
+  ConsoleEntry,
+};
 
 // Convenience function to render a single map
 export const renderMap = (
@@ -37,13 +44,15 @@ export const renderGame = (
   world: World,
   units?: Record<string, BaseUnit>,
   config: IGameRendererConfig = {},
-  diaryEntries?: DiaryEntry[]
+  diaryEntries?: DiaryEntry[],
+  consoleEntries?: ConsoleEntry[]
 ) => {
   const { waitUntilExit } = render(
     <GameRenderer
       world={world}
       units={units}
       diaryEntries={diaryEntries}
+      consoleEntries={consoleEntries}
       config={config}
     />
   );
