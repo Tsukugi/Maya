@@ -119,6 +119,17 @@ export const GameRenderer: React.FC<GameRendererProps> = ({
     terminalWidth,
     useColumnLayout
   );
+  const mapMinHeight = useMemo(() => {
+    if (mapsToRender.length === 0) {
+      return undefined;
+    }
+    // Ensure the map container never shrinks below the full map height plus header lines
+    const bufferLines = 2; // map title + spacer
+    return mapsToRender.reduce(
+      (maxHeight, map) => Math.max(maxHeight, map.height + bufferLines),
+      0
+    );
+  }, [mapsToRender]);
   const consoleVisible = config.showConsole !== false;
   const consoleHeight = Math.min(config.consoleMaxHeight || 12, 30);
 
@@ -138,12 +149,12 @@ export const GameRenderer: React.FC<GameRendererProps> = ({
         <Box
           flexDirection="column"
           flexGrow={useColumnLayout ? 1 : 1}
-          flexShrink={1}
+          flexShrink={0}
           flexBasis={useColumnLayout ? "0" : mapFlexBasis}
           paddingRight={useColumnLayout ? 0 : 1}
           paddingBottom={useColumnLayout ? 1 : 0}
           borderStyle="single"
-          height={useColumnLayout ? "50%" : diaryLayout.height}
+          minHeight={mapMinHeight}
         >
           <Box
             flexDirection="row"
